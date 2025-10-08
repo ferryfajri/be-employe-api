@@ -1,10 +1,11 @@
 const bcrypt = require('bcryptjs');
+const pool = require('../config/db');
 const { findUserByEmail, findUserByUsername, createUser } = require('../models/userModel');
 const generateToken = require('../utils/generateToken');
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role = 'user' } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -20,7 +21,7 @@ exports.register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await createUser(username, email, hashedPassword);
+    const newUser = await createUser(username, email, hashedPassword, role);
     const token = generateToken(newUser);
 
     res.status(201).json({
@@ -30,6 +31,7 @@ exports.register = async (req, res) => {
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
+        role: newUser.role,
       },
     });
   } catch (error) {
@@ -65,6 +67,7 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
